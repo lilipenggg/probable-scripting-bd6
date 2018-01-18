@@ -1,0 +1,74 @@
+#!/bin/bash
+# Lili Peng
+# Lab2 - Search and Report
+# CS3030 - Scripting
+
+# Reset the seconds to zero
+SECONDS=0
+
+# Make sure there is one argument when calling the script
+if [ $# -ne 1 ]
+    then
+        echo "Usage: srpt PATH"
+	exit 1
+fi
+
+# Make sure that the argument is a valid path - either a file or directory
+if [ ! -d $1 ] && [ ! -f $1 ]
+    then
+        echo "Error: invalid PATH"
+fi
+
+# Create a temporary folder in /tmp to hold the tmp file created by the script
+unique_time_stamp=$(date +%s)
+tmp_folder_path="/tmp/tmp_lab2_${unique_time_stamp}"
+mkdir "$tmp_folder_path"
+
+# Calculate the number of directory in the given path
+let dir_count=$(find $1 -type d | wc -l)-1
+
+# Calculate the number of files in the given path
+file_count=$(find $1 -type f | wc -l)
+
+# Calculate the number of symbolic links in the given path
+sym_count=$(find -L $1 -type l | wc -l)
+
+# Calculate the number of old files in the given path
+old_file_count=$(find $1 -type f -mtime +365 | wc -l)
+
+# Calculate the number of large files
+large_file_count=$(find $1 -type f -size +500000c | wc -l)
+
+# Calculate the number of graphic files
+jpg_count=$(find $1 -name '*.jpg' -type f | wc -l)
+gif_count=$(find $1 -name '*.gif' -type f | wc -l)
+bmp_count=$(find $1 -name '*.bmp' -type f | wc -l)
+graphic_file_count=$(($jpg_count+$gif_count+$bmp_count))
+
+# Calculate the number of temporary files
+temp_file_count=$(find $1 -name '*.o' -type f | wc -l)
+
+# Calculate the number of executable files
+exe_file_count=$(find $1 -executable -type f | wc -l)
+
+# Calculate the total file size
+fsize_path="${tmp_folder_path}/filesize"
+find $1 -type f -fprintf ${fsize_path} "%s\n"
+total_file_size=$(awk '{tot=tot+$1}END{print tot}' "${fsize_path}")
+
+# Print out search report
+exec_t=$SECONDS
+printf "SearchReport %s %s %s\n" "$(hostname)" "${1}" "$(date)"
+printf "Execution time %d\n" "$exec_t"
+printf "Directories %'d\n" "$dir_count"
+printf "Files %'d\n" "$file_count"
+printf "Sym links %'d\n" "$sym_count"
+printf "Old files %'d\n" "$old_file_count"
+printf "Large files %'d\n" "$large_file_count"
+printf "Graphics files %'d\n" "$graphic_file_count"
+printf "Temporary files %'d\n" "$temp_file_count"
+printf "Executable files %'d\n" "$exe_file_count"
+printf "TotalFileSize %'d\n" "$total_file_size"
+
+# Clean up the created tmp folder
+rm -r ${fsize_path}
