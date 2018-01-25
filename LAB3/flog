@@ -10,34 +10,34 @@ echo "Usage: flog LOGFILE"
 exit 1
 fi
 
-# Prepare some tmp folders for storing data from the script
-unique_time_stamp=$(date +%s)
-tmp_folder_path="/tmp/test_lab3_${unique_time_stamp}"
-mkdir "$tmp_folder_path"
+sed -n 's/.*Failed password for \([a-z0-9A_Z_]*\) .*/\1/p' <$1 >s1out
 
-tmp_file_a="${tmp_folder_path}/output_a"
-sed -n 's/.*Failed password for \([a-z0-9A_Z_]*\) .*/\1/p' $1 > "$tmp_file_a"
+sort <s1out >s2out
 
-tmp_file_b="${tmp_folder_path}/output_b"
-sort <$tmp_file_a >"$tmp_file_b"
+uniq -c <s2out >s3out
 
-tmp_file_c="${tmp_folder_path}/output_c"
-uniq -c <$tmp_file_b >"$tmp_file_c"
+sort -k1,1nr -k2,2 <s3out >s4out
 
-tmp_file_d="${tmp_folder_path}/output_d"
-sort -k1,1nr -k2,2 $tmp_file_c > "$tmp_file_d";
+sed 's/invalid/\&lt;UNKNOWN\&gt;/' <s4out >s5out
 
-tmp_file_e="${tmp_folder_path}/output_e"
-sed 's/invalid/\&lt;UNKNOWN\&gt;/' <"$tmp_file_d" >"$tmp_file_e"
+# Check to see if s6out already exists
+if [ -f s6out ]
+then
+rm s6out
+fi
 
-tmp_file_f="${tmp_folder_path}/output_f"
-cat $tmp_file_e| while read count userid; do
-printf "%'d %s\n" "$count" "$userid" >>"$tmp_file_f"
+cat s5out| while read count userid; do
+printf "%'d %s\n" "$count" "$userid" >>s6out
 done
 
-tmp_file_g="${tmp_folder_path}/output_g"
-#awk 'BEGIN{print "<html>\n<body><h1>Failed Login Attempts Report as of ${date}</h1>\n"} {for(i=1;i<=NF;i++)print "<br />"$i} END{print "\n</body>";print "</html>"}' "$tmp_file_f" >> "$tmp_file_g"
-sed 's|^|\&lt;br /\&gt;|' <"$tmp_file_f" >"$tmp_file_g"
+sed 's|^|<br />|' <s6out >s7out
 
-sed -i "\&lt;html\&gt;\n\&lt;body\&gt;\&lt;h1\&gt;Failed Login Attempts Report as of $(date)\&lt;/h1\&lt;\n" "$tmp_file_g"
-#echo '\&lt;/body\&gt; \&lt;/html\&gt;' >> "$tmp_file_g"
+now=$(date)
+sed "1s|^|<html>\n<body><h1>Failed Login Attempts Report as of ${now}</h1>\n|" <s7out >s8out
+sed -i '$s|$|</body> </html>|' s8out
+
+# Print out the final output
+echo "$(cat s8out)"
+
+exit 0
+
