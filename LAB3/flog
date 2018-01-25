@@ -1,0 +1,43 @@
+#!/bin/bash
+# Lili Peng
+# Lab3 - Failed Login Report
+# CS3030 - Scripting
+
+# Make sure there is one argument being passed in when calling the script
+if [ $# -ne 1 ]
+then
+echo "Usage: flog LOGFILE"
+exit 1
+fi
+
+# Prepare some tmp folders for storing data from the script
+unique_time_stamp=$(date +%s)
+tmp_folder_path="/tmp/test_lab3_${unique_time_stamp}"
+mkdir "$tmp_folder_path"
+
+tmp_file_a="${tmp_folder_path}/output_a"
+sed -n 's/.*Failed password for \([a-z0-9A_Z_]*\) .*/\1/p' $1 > "$tmp_file_a"
+
+tmp_file_b="${tmp_folder_path}/output_b"
+sort <$tmp_file_a >"$tmp_file_b"
+
+tmp_file_c="${tmp_folder_path}/output_c"
+uniq -c <$tmp_file_b >"$tmp_file_c"
+
+tmp_file_d="${tmp_folder_path}/output_d"
+sort -k1,1nr -k2,2 $tmp_file_c > "$tmp_file_d";
+
+tmp_file_e="${tmp_folder_path}/output_e"
+sed 's/invalid/\&lt;UNKNOWN\&gt;/' <"$tmp_file_d" >"$tmp_file_e"
+
+tmp_file_f="${tmp_folder_path}/output_f"
+cat $tmp_file_e| while read count userid; do
+printf "%'d %s\n" "$count" "$userid" >>"$tmp_file_f"
+done
+
+tmp_file_g="${tmp_folder_path}/output_g"
+#awk 'BEGIN{print "<html>\n<body><h1>Failed Login Attempts Report as of ${date}</h1>\n"} {for(i=1;i<=NF;i++)print "<br />"$i} END{print "\n</body>";print "</html>"}' "$tmp_file_f" >> "$tmp_file_g"
+sed 's|^|\&lt;br /\&gt;|' <"$tmp_file_f" >"$tmp_file_g"
+
+sed -i "\&lt;html\&gt;\n\&lt;body\&gt;\&lt;h1\&gt;Failed Login Attempts Report as of $(date)\&lt;/h1\&lt;\n" "$tmp_file_g"
+#echo '\&lt;/body\&gt; \&lt;/html\&gt;' >> "$tmp_file_g"
