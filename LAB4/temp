@@ -1,0 +1,71 @@
+#!/usr/bin/python
+# Lili Peng
+# Lab4 - Temperature Conversion Program
+# CS3030 - Scripting
+
+
+def fahrenheitToCelsius(fahrenheit):
+    """ Convert fahrenheit to celsius, return converted temperature """
+    return (float(fahrenheit) - 32.0)* (5.0 / 9.0)
+
+
+def celsiusToFahrenheit(celsius):
+    """ Convert celsius to fahrenheit, return converted temperature """
+    return (9.0/5.0) * float(celsius) + 32.0
+
+
+def validateUserInput(input, is_menu_opt=False):
+    """ Try converting user input to a number, return false if not successful, otherwise return true """
+    try:
+        if is_menu_opt:
+            int(input)
+        else:
+            float(input)
+        return True
+
+    except Exception as e:
+        print "Invalid entry, encounter exception: {0}".format(e.args[0])
+        return False
+
+print "Welcome to the CS 3030 Temperature Conversion Program"
+
+quit = False
+while not quit:
+    print "Main Menu\n"
+    print "1:Fahrenheit to Celsius"
+    print "2:Celsius to Fahrenheit"
+    print "3:Exit program\n"
+
+    # Read and validate user input from the prompt
+    input = raw_input("Please enter 1, 2 or 3: ")
+    if not validateUserInput(input, True):
+        continue
+    input = int(input)
+
+    # Menu option 1 - converting fahrenheit to celsius
+    if input == 1:
+        input = raw_input("Please enter degrees Fahrenheit: ")
+        if not validateUserInput(input):
+            continue
+        print "{0} degrees Fahrenheit equals {1} degrees Celsius\n".format(input, round(fahrenheitToCelsius(input), 1))
+
+    # Menu option 2 - converting celsius to fahrenheit
+    elif input == 2:
+        input = raw_input("Please enter degrees Celsius: ")
+        if not validateUserInput(input):
+            continue
+        print "{0} degrees Celsius equals {1} degrees Fahrenheit\n".format(input, round(celsiusToFahrenheit(input), 1))
+
+    # Menu option 3 - exiting the program
+    elif input == 3:
+        print "Program exits.\n"
+        exit(0)
+
+    # Menu option does not exit - prompt the user for another menu option number
+    else:
+        print "Unrecognizable menu option number.\n"
+        continue
+
+
+
+
