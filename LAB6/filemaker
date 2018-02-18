@@ -1,0 +1,89 @@
+#!/usr/bin/python
+# Lili Peng
+# Lab6 - Filemaker
+# CS3030 - Scripting
+
+from sys import argv
+from shlex import split
+from random import randint
+
+# Make sure all three parameters are being passed in
+if len(argv) != 4:
+    print ("Usage: ./filemaker INPUTCOMMANDFILE OUTPUTFILE RECORDCOUNT")
+    exit(1)
+
+# Try opening the input command file
+input_fh = ""
+try:
+    input_fh = open(argv[1], "r")
+except Exception as e:
+    print "Error: {0}".format(e.args[0])
+    exit(1)
+
+# Try opening the output file
+output_fh = ""
+try:
+    output_fh = open(argv[2], "w")
+except Exception as e:
+    print "Error: {0}".format(e.args[0])
+    exit(1)
+
+randomFiles = {}
+commands = []
+
+for line in input_fh.readlines():
+    if line.startswith('#'):
+        continue
+    command = split(line, True)
+    if command[0] == "HEADER":
+        output_fh.write(command[1].decode('string_escape'))
+        continue
+    elif command[0] == "FILEWORD":
+        filename = command[2]
+        fh = open(filename, "r")
+        randomFiles[filename] = fh.readlines()
+        fh.close()
+    commands.append(command)
+
+# Loop through the number of record count
+for i in range(int(argv[3])):
+    randomData = {}
+
+    # Generate random data
+    for command in commands:
+        if command[0] == "REFER" or command[0] == "STRING":
+            continue
+
+        elif command[0] == "FILEWORD":
+            # Check if the label already exist in randomData
+            if command[1] in randomData:
+                print "Error: the label {0} already exists".format(command[1])
+                exit(1)
+            else:
+                filename = command[2]
+                ran_num = randint(0, len(randomFiles[filename]) - 1)
+                word = (randomFiles[filename][ran_num]).rstrip()
+                randomData[command[1]] = word
+
+        elif command[0] == "NUMBER":
+            if command[1] in randomData:
+                print "Error: the label {0} already exists".format(command[1])
+                exit(1)
+            else:
+                ran_num = randint(int(command[2]), int(command[3]))
+                randomData[command[1]] = ran_num
+
+    # Generate output
+    for command in commands:
+        if command[0] == "STRING":
+            output_fh.write((command[1]).decode('string_escape'))
+        elif command[0] == "NUMBER":
+            output_fh.write(str(randomData[command[1]]))
+        elif command[0] == "FILEWORD":
+            output_fh.write(randomData[command[1]])
+        elif command[0] == "REFER":
+            output_fh.write(str(randomData[command[1]]))
+
+# Close the output file handler after done writing output
+output_fh.close()
+exit(0)
